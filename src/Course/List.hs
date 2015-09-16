@@ -75,8 +75,8 @@ headOr ::
   a
   -> List a
   -> a
-headOr x Nil = x
-headOr _x (y :. _ys) = y
+headOr x Nil      = x
+headOr _ (y :. _) = y
 
 -- | The product of the elements of a list.
 --
@@ -88,7 +88,8 @@ headOr _x (y :. _ys) = y
 product ::
   List Int
   -> Int
-product xs = foldLeft (*) 1 xs
+product Nil       = 1
+product (x :. xs) = x * product xs
 
 -- | Sum the elements of the list.
 --
@@ -102,7 +103,8 @@ product xs = foldLeft (*) 1 xs
 sum ::
   List Int
   -> Int
-sum xs = foldLeft (+) 0 xs
+sum Nil        = 0
+sum (x :. xs)  = x + sum xs
 
 -- | Return the length of the list.
 --
@@ -113,7 +115,8 @@ sum xs = foldLeft (+) 0 xs
 length ::
   List a
   -> Int
-length = sum . map (const 1)
+length Nil       = 0
+length (_ :. xs) = 1 + length xs
 
 -- | Map the given function on each element of the list.
 --
@@ -127,7 +130,8 @@ map ::
   (a -> b)
   -> List a
   -> List b
-map f = foldLeft (\l r -> l ++ (f r :. Nil)) Nil
+map _ Nil       = Nil
+map f (x :. xs) = f x :. map f xs
 
 -- | Return elements satisfying the given predicate.
 --
@@ -143,8 +147,10 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter _p Nil = Nil
-filter p (x :. xs) = if p x then x :. filter p xs else filter p xs
+filter _ Nil       = Nil
+filter p (x :. xs)
+	| p x       = x :. filter p xs 
+	| otherwise = filter p xs
 
 -- | Append two lists to a new list.
 --
@@ -162,10 +168,10 @@ filter p (x :. xs) = if p x then x :. filter p xs else filter p xs
   List a
   -> List a
   -> List a
-(++) Nil Nil = Nil
-(++) Nil bs = bs
-(++) as Nil = as
-(++) (a :. as) bs = a :. (as ++ bs)
+(++) Nil Nil      = Nil
+(++) Nil ys       = ys
+(++) xs Nil       = xs
+(++) (x :. xs) ys = x :. (xs ++ ys)
 
 infixr 5 ++
 
@@ -182,8 +188,8 @@ infixr 5 ++
 flatten ::
   List (List a)
   -> List a
-flatten Nil = Nil
-flatten (a :. as) = a ++ flatten as
+flatten Nil       = Nil
+flatten (x :. xs) = x ++ flatten xs
 
 -- | Map a function then flatten to a list.
 --
@@ -199,7 +205,7 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap f as = flatten (map f as)
+flatMap f xs = flatten (map f xs)
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -208,7 +214,7 @@ flatMap f as = flatten (map f as)
 flattenAgain ::
   List (List a)
   -> List a
-flattenAgain aas = flatMap id aas
+flattenAgain = flatMap id
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -237,12 +243,12 @@ seqOptional
     -> Optional (List a)
 seqOptional Nil = Full Nil
 seqOptional as
-    | empty as = Empty
+    | empty as  = Empty
 	| otherwise = Full $ map (\(Full a) -> a) as
     where
-	empty Nil = False
-	empty (Empty :. as) = True
-	empty (Full _ :. as) = False || empty as
+	empty Nil            = False
+	empty (Empty  :. as)  = True
+	empty (Full _ :. as) = empty as
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -264,9 +270,9 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find _p Nil = Empty
+find _ Nil = Empty
 find p (a :. as)
-    | p a = Full a
+    | p a       = Full a
     | otherwise = find p as
 
 -- | Determine if the length of the given list is greater than 4.
@@ -285,9 +291,14 @@ find p (a :. as)
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 as
-    | length as > 4 = True
-    | otherwise = False
+lengthGT4 = (`lengthGT` 4)
+	where
+	lengthGT Nil n
+		| n < 0     = True
+		| otherwise = False
+	lengthGT (_ :. xs) n
+		| n < 0     = True
+		| otherwise = xs `lengthGT` (n-1)
 
 -- | Reverse a list.
 --
@@ -303,8 +314,10 @@ lengthGT4 as
 reverse ::
   List a
   -> List a
-reverse Nil = Nil
-reverse (a :. as) = undefined -- reverse as ++ (a :. Nil)
+reverse xs = reverse' xs Nil
+	where
+	reverse' Nil       ys = ys
+	reverse' (x :. xs) ys = reverse' xs (x :. ys)
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -318,7 +331,7 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce f a = undefined -- a :. produce f (f a)
+produce f a = a :. produce f (f a)
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
@@ -332,8 +345,7 @@ produce f a = undefined -- a :. produce f (f a)
 notReverse ::
   List a
   -> List a
-notReverse =
-  error "todo: Is it even possible?"
+notReverse = reverse
 
 ---- End of list exercises
 
