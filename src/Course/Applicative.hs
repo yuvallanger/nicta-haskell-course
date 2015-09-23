@@ -55,7 +55,7 @@ instance Applicative Id where
 	pure ::
 		a
 		-> Id a
-	pure a = Id a
+	pure = Id
 
 -- | Insert into a List.
 --
@@ -81,7 +81,7 @@ instance Applicative Optional where
 instance Applicative ((->) t) where
 	pure ::
 		a
-		-> ((->) t a)
+		-> (->) t a
 	pure a _ = a
 
 -- | Sequences a list of structures to a structure of list.
@@ -104,7 +104,7 @@ sequence ::
 	Applicative f =>
 	List (f a)
 	-> f (List a)
-sequence xs = foldRight (\(l :: f a) (r :: f (List a)) -> (:.) <$> l <*> r) (pure Nil) xs
+sequence = foldRight (\(l :: f a) (r :: f (List a)) -> (:.) <$> l <*> r) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
