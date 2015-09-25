@@ -154,7 +154,8 @@ filtering ::
 	(a -> f Bool)
 	-> List a
 	-> f (List a)
-filtering p xs = (filter <$> (sequence (p <$> xs))) <*> xs
+filtering p xs =
+	(snd <$>) <$> filter fst <$> lift2 zip (sequence $ p <$> xs) (sequence $ pure <$> xs)
 
 -----------------------
 -- SUPPORT LIBRARIES --
